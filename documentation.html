@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drone Path Optimization — Documentation</title>
+  <style>
+    :root {
+      --accent:  #2563eb;
+      --accent2: #1d4ed8;
+      --bg:      #f8fafc;
+      --code-bg: #f1f5f9;
+      --border:  #e2e8f0;
+      --text:    #1e293b;
+      --muted:   #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg);
+    }
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+    nav {
+      width: 260px;
+      min-width: 260px;
+      background: #1e293b;
+      color: #cbd5e1;
+      padding: 32px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    nav h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+      padding: 0 24px 12px;
+      border-bottom: 1px solid #334155;
+      margin-bottom: 12px;
+    }
+    nav a {
+      display: block;
+      padding: 6px 24px;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 13.5px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    nav a:hover, nav a.active {
+      color: #fff;
+      border-left-color: var(--accent);
+      background: rgba(255,255,255,0.05);
+    }
+    nav a.section { font-weight: 600; color: #e2e8f0; margin-top: 8px; }
+    nav a.sub { padding-left: 36px; font-size: 13px; color: #94a3b8; }
+    main {
+      flex: 1;
+      padding: 48px 56px;
+      max-width: 960px;
+    }
+    /* Typography */
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+    }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin: 28px 0 10px;
+    }
+    h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 20px 0 8px;
+    }
+    p { margin-bottom: 12px; }
+    /* Code */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85em;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #1e293b;
+      color: #e2e8f0;
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:hover td { background: #eff6ff; }
+    /* Callout boxes */
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eff6ff;
+      border-radius: 0 6px 6px 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 0.92rem;
+    }
+    .callout.warn {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    /* Math formula display */
+    .formula {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 20px;
+      margin: 16px 0;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.9rem;
+      color: #1e293b;
+    }
+    /* Module header badge */
+    .module-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    /* Dependency graph */
+    .dep-tree {
+      background: #1e293b;
+      color: #a5f3fc;
+      border-radius: 8px;
+      padding: 20px 24px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    ul { padding-left: 24px; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar navigation -->
+<nav>
+  <h2>Navigation</h2>
+  <a class="section" href="#overview">Overview</a>
+  <a class="section" href="#formulation">Problem Formulation</a>
+  <a class="section" href="#modules">Modules</a>
+  <a class="sub" href="#kinematics">kinematics.py</a>
+  <a class="sub" href="#geometry">geometry.py</a>
+  <a class="sub" href="#metrics">metrics.py</a>
+  <a class="sub" href="#optimization">optimization.py</a>
+  <a class="sub" href="#routing">routing.py</a>
+  <a class="sub" href="#comparison">comparison.py</a>
+  <a class="sub" href="#visualization">visualization.py</a>
+  <a class="sub" href="#monte_carlo">monte_carlo.py</a>
+  <a class="section" href="#dependencies">Dependencies</a>
+  <a class="section" href="#running">Running the Code</a>
+  <a class="section" href="#assumptions">Key Assumptions</a>
+</nav>
+
+<!-- Main content -->
+<main>
+
+  <h1>Drone Path Optimization</h1>
+  <p class="subtitle">Code Documentation &mdash; Spring 2026</p>
+
+  <!-- Overview -->
+  <h2 id="overview">Overview</h2>
+  <p>
+    This codebase optimizes the path of a drone that must visit a set of
+    <strong>moving cluster heads</strong> (communication nodes) and return to its base.
+    The drone departs from and returns to the origin <code>(0, 0)</code>.
+    Each cluster head moves at constant velocity.
+  </p>
+  <p>
+    The objective is to minimize the total communication cost — the sum of
+    <code>distance<sup>p</sup></code> between each drone reception point and its
+    corresponding cluster head at the time of arrival — subject to the constraint
+    that the total drone path length equals a fixed value <code>L</code>.
+  </p>
+  <p>
+    A Monte Carlo framework runs multiple random test cases across configurable
+    parameter scenarios and reports comparative statistics for ten optimizer variants.
+  </p>
+
+  <!-- Problem Formulation -->
+  <h2 id="formulation">Problem Formulation</h2>
+
+  <h3>State</h3>
+  <p>The drone path is a polyline with <code>J + 2</code> points:</p>
+  <div class="formula">
+    (u<sub>0</sub>, v<sub>0</sub>) = (0,0),&nbsp;&nbsp;
+    (u<sub>1</sub>, v<sub>1</sub>), ..., (u<sub>J</sub>, v<sub>J</sub>),&nbsp;&nbsp;
+    (u<sub>J+1</sub>, v<sub>J+1</sub>) = (0,0)
+  </div>
+  <p>The <code>J</code> interior points are the drone reception points, one per cluster head.</p>
+
+  <h3>Constraint</h3>
+  <div class="formula">g(u, v) = &sum; segment lengths = L</div>
+
+  <h3>Objective</h3>
+  <div class="formula">
+    f(u, v) = &sum;<sub>j=1</sub><sup>J</sup>
+    dist(drone_point<sub>j</sub>, cluster<sub>j</sub> at arrival<sub>j</sub>)<sup>p</sup>
+  </div>
+  <p>where</p>
+  <div class="formula">
+    arrival<sub>j</sub> = cumulative_path_length_to_j / s<sub>d</sub><br>
+    cluster<sub>j</sub> at arrival = (X0<sub>j</sub> + s<sub>jx</sub> &middot; arrival<sub>j</sub>,
+    &nbsp;Y0<sub>j</sub> + s<sub>jy</sub> &middot; arrival<sub>j</sub>)
+  </div>
+
+  <h3>Key Dimensionless Ratio</h3>
+  <div class="formula">(sMax / s<sub>d</sub>) &times; (L / dInit)</div>
+  <p>
+    This governs problem difficulty — it measures total cluster displacement relative
+    to the initial spread. With <code>s_d = 1</code> fixed (choice of units), only
+    <code>sMax</code> needs to vary across scenarios.
+  </p>
+
+  <!-- Modules -->
+  <h2 id="modules">Module Reference</h2>
+
+  <!-- kinematics -->
+  <div class="module-badge">Module</div>
+  <h3 id="kinematics">kinematics.py</h3>
+  <p>Constant-velocity cluster head motion.</p>
+  <table>
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>Xj(X0_j, s_jx, t_j)</code></td><td>x-position at time <code>t_j</code></td></tr>
+    <tr><td><code>Yj(Y0_j, s_jy, t_j)</code></td><td>y-position at time <code>t_j</code></td></tr>
+    <tr><td><code>Xj_prime(s_jx)</code></td><td>x-velocity (returns <code>s_jx</code>)</td></tr>
+    <tr><td><code>Yj_prime(s_jy)</code></td><td>y-velocity (returns <code>s_jy</code>)</td></tr>
+  </table>
+
+  <!-- geometry -->
+  <div class="module-badge">Module</div>
+  <h3 id="geometry">geometry.py</h3>
+  <p>Path geometry utilities.</p>
+  <div class="callout warn">
+    <strong>Assumption</strong>
+    Both endpoints must be <code>(0, 0)</code> for <code>project_to_length</code> to
+    correctly enforce <code>g = L</code>.
+  </div>
+  <table>
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>path_length(uVec, vVec)</code></td><td>Total polyline length</td></tr>
+    <tr><td><code>initialize_path_from_cluster_heads(X0_j, Y0_j, L)</code></td>
+        <td>Build initial path by placing interior points at cluster head positions, then scaling to length <code>L</code></td></tr>
+    <tr><td><code>project_to_length(u, v, L)</code></td>
+        <td>Scale interior points radially from <code>u[0], v[0]</code> so total path length equals <code>L</code></td></tr>
+  </table>
+
+  <!-- metrics -->
+  <div class="module-badge">Module</div>
+  <h3 id="metrics">metrics.py</h3>
+  <p>Objective function evaluation.</p>
+  <table>
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>gf_values_moving(u_path, v_path, X0_j, Y0_j, sx_j, sy_j, s_d, p)</code></td>
+        <td>Returns <code>(g, f)</code> accounting for cluster head motion. Primary evaluation function.</td></tr>
+    <tr><td><code>gf_values(u, v, u0, v0, X_j, Y_j, p)</code></td>
+        <td>Returns <code>(g, f)</code> for static cluster heads.</td></tr>
+    <tr><td><code>total_clusterhead_energy(...)</code></td>
+        <td>Equivalent to <code>f</code> in <code>gf_values_moving</code>; kept for reference.</td></tr>
+  </table>
+
+  <!-- optimization -->
+  <div class="module-badge">Module</div>
+  <h3 id="optimization">optimization.py</h3>
+  <p>
+    Core gradient-descent optimizer. Minimizes <code>f</code> subject to <code>g = L</code>
+    using pseudo-time Euler integration with backtracking line search.
+  </p>
+
+  <h4>Pseudo-time Flow</h4>
+  <div class="formula">
+    d(u,v)/d&tau; = &minus;(&nabla;g &middot; &nabla;g) &nabla;f &nbsp;+&nbsp; (&nabla;f &middot; &nabla;g) &nabla;g
+  </div>
+  <p>
+    This direction is tangent to the constraint surface <code>g = L</code> and
+    descends in <code>f</code>. &tau; (pseudo-time) is a purely numerical variable
+    with no physical meaning — it is unrelated to the physical time used by <code>s_d</code>.
+  </p>
+
+  <div class="callout">
+    <strong>Scale Invariance (p = 2)</strong>
+    With <code>p = 2</code> the optimizer is scale-invariant — <code>dtau</code> does
+    not need to change when <code>L</code>, <code>dInit</code>, or other length scales
+    are changed by a uniform factor.
+  </div>
+
+  <h4>Key Functions</h4>
+  <table>
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>grad_g(uVec, vVec)</code></td><td>Gradient of path-length constraint, shape <code>(2N,)</code></td></tr>
+    <tr><td><code>grad_f(...)</code></td><td>Gradient of objective including Jacobian terms for cluster motion, shape <code>(2N,)</code></td></tr>
+    <tr><td><code>rhs_tau(...)</code></td><td>Constrained flow RHS; zeros out fixed endpoint components</td></tr>
+    <tr><td><code>solve_ivp_fixed_order(...)</code></td><td>Main optimizer — Euler steps with backtracking and convergence check</td></tr>
+  </table>
+
+  <h4>solve_ivp_fixed_order Algorithm</h4>
+  <ol style="padding-left:24px; margin-bottom:16px;">
+    <li>Evaluate <code>f_cur</code> at the initial path.</li>
+    <li>For each step up to <code>n_steps</code>:
+      <ul>
+        <li>Compute <code>rhs_tau</code> and clip to <code>grad_clip</code>.</li>
+        <li><strong>Backtracking line search:</strong> try step size <code>dtau</code>,
+            halve up to <code>max_backtracks</code> times until <code>f</code> decreases after projection.</li>
+        <li>Project back onto <code>g = L</code>.</li>
+        <li><strong>Convergence check</strong> every <code>ivpIter = 50</code> steps:
+            stop if relative decrease in <code>f</code> &lt; <code>ivpTol = 0.001</code>.</li>
+      </ul>
+    </li>
+    <li>Print step count if steps exceeded 200.</li>
+  </ol>
+
+  <h4>Parameters</h4>
+  <table>
+    <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>dtau</code></td><td><code>0.1</code></td><td>Initial step size (backtracking reduces as needed)</td></tr>
+    <tr><td><code>n_steps</code></td><td><code>500</code></td><td>Maximum number of steps</td></tr>
+    <tr><td><code>grad_clip</code></td><td><code>1e2</code></td><td>Gradient clipping threshold</td></tr>
+    <tr><td><code>max_backtracks</code></td><td><code>10</code></td><td>Maximum halvings per step</td></tr>
+    <tr><td><code>ivpIter</code></td><td><code>50</code></td><td>Convergence check interval (steps)</td></tr>
+    <tr><td><code>ivpTol</code></td><td><code>0.001</code></td><td>Relative <code>f</code> change threshold</td></tr>
+  </table>
+
+  <!-- routing -->
+  <div class="module-badge">Module</div>
+  <h3 id="routing">routing.py</h3>
+  <p>TSP solver and rolling/iterative optimization algorithms.</p>
+
+  <h4>solve_tsp_exact(X, Y, tsp_time_limit, initial_order)</h4>
+  <p>
+    Solves TSP via OR-Tools Guided Local Search. Runs in time slices of
+    <code>TSPsec = 0.15</code> seconds; stops when a full slice produces no improvement.
+    Prints improvement count and time of last improvement on each call.
+  </p>
+  <div class="callout">
+    <strong>Warm Start</strong>
+    Pass <code>initial_order</code> to start local search from a known route via
+    <code>SolveFromAssignmentWithParameters</code>. Node 0 is the implicit depot
+    and must be excluded from <code>initial_order</code>.
+  </div>
+
+  <h4>Optimizer Variants</h4>
+  <table>
+    <tr><th>Function</th><th>Method Name</th><th>Description</th></tr>
+    <tr>
+      <td><code>rolling_optimize_indexed_reorder(..., use_greedy=False)</code></td>
+      <td>Predicted Rolling</td>
+      <td>Reorders at specific cluster-visit indices using TSP on predicted positions. Warm-starts re-solve.</td>
+    </tr>
+    <tr>
+      <td><code>rolling_optimize_indexed_reorder(..., use_greedy=True)</code></td>
+      <td>Greedy Rolling</td>
+      <td>Same as above but uses greedy nearest-neighbor instead of TSP.</td>
+    </tr>
+    <tr>
+      <td><code>iterative_tsp_predicted</code></td>
+      <td>FinalXY</td>
+      <td>Iteratively solve + TSP-reorder <em>predicted cluster positions</em> until ordering stabilises. Returns best result across all iterations.</td>
+    </tr>
+    <tr>
+      <td><code>iterative_greedy_predicted</code></td>
+      <td>FinalXY_Greed</td>
+      <td>Same as FinalXY but uses greedy nearest-neighbor reordering. No TSP calls.</td>
+    </tr>
+    <tr>
+      <td><code>iterative_tsp_drone_points</code></td>
+      <td>FinalUV</td>
+      <td>Iteratively solve + TSP-reorder <em>drone reception points</em> until stabilised.</td>
+    </tr>
+  </table>
+
+  <!-- comparison -->
+  <div class="module-badge">Module</div>
+  <h3 id="comparison">comparison.py</h3>
+  <p>
+    Runs all ten optimizer variants on a single test case and returns a unified
+    results dictionary.
+  </p>
+
+  <h4>Initial Ordering</h4>
+  <p>
+    Before any method runs, an initial TSP ordering is computed on predicted cluster
+    positions at midpoint time <code>t = L / (2 * s_d)</code>. Both forward and
+    reversed versions are run for each method, giving 10 variants:
+  </p>
+  <table>
+    <tr><th>Index</th><th>Name</th></tr>
+    <tr><td>0</td><td>FinalXY</td></tr>
+    <tr><td>1</td><td>FinalXY_Greed</td></tr>
+    <tr><td>2</td><td>FinalUV</td></tr>
+    <tr><td>3</td><td>Predicted Rolling</td></tr>
+    <tr><td>4</td><td>Greedy Rolling</td></tr>
+    <tr><td>5</td><td>FinalXY Rev</td></tr>
+    <tr><td>6</td><td>FinalXY_Greed Rev</td></tr>
+    <tr><td>7</td><td>FinalUV Rev</td></tr>
+    <tr><td>8</td><td>Predicted Rolling Rev</td></tr>
+    <tr><td>9</td><td>Greedy Rolling Rev</td></tr>
+  </table>
+
+  <h4>Results Dictionary (per method)</h4>
+  <pre><code>{
+    'g':        float,   # path length
+    'f':        float,   # objective value
+    'reorders': int,     # number of reorder events
+    'time':     float,   # wall-clock time (seconds)
+    'u', 'v':   ndarray, # final drone path
+    'X', 'Y':   ndarray, # cluster positions at t=0 (final visit order)
+    'sx', 'sy': ndarray, # cluster velocities (final visit order)
+}</code></pre>
+
+  <h4>Summary Table Columns</h4>
+  <p><code>g</code> &nbsp;|&nbsp; <code>f</code> &nbsp;|&nbsp;
+     <code>% Improv</code> (vs. initial ordering) &nbsp;|&nbsp;
+     <code>#Reorders</code> &nbsp;|&nbsp; <code>Time(s)</code></p>
+
+  <!-- visualization -->
+  <div class="module-badge">Module</div>
+  <h3 id="visualization">visualization.py</h3>
+  <div class="callout">
+    All plot functions return <code>fig</code> without calling <code>plt.show()</code>.
+    The caller is responsible for displaying or saving.
+  </div>
+  <table>
+    <tr><th>Function</th><th>Description</th></tr>
+    <tr><td><code>plot_optimizers_paths(results, s_d)</code></td>
+        <td>2&times;5 grid of drone trajectories for all 10 methods</td></tr>
+    <tr><td><code>plot_monte_carlo_paths(results, s_d)</code></td>
+        <td>Thin wrapper around <code>plot_optimizers_paths</code></td></tr>
+    <tr><td><code>plot_best_solution(results, best_method, s_d, test_num)</code></td>
+        <td>Large single-panel plot of the winning method</td></tr>
+    <tr><td><code>plot_drone_and_clusterheads(...)</code></td>
+        <td>Grid of 8 snapshots showing path evolution over pseudo-time</td></tr>
+    <tr><td><code>plot_final_path_with_labeled_clusterhead_arrivals(...)</code></td>
+        <td>Final path with numbered cluster arrival labels</td></tr>
+    <tr><td><code>animate_final_path_smooth(...)</code></td>
+        <td>Animation of drone flying with moving cluster heads</td></tr>
+  </table>
+
+  <!-- monte_carlo -->
+  <div class="module-badge">Module</div>
+  <h3 id="monte_carlo">monte_carlo.py</h3>
+  <p>Monte Carlo evaluation across multiple scenarios.</p>
+
+  <h4>Scenario Definition</h4>
+  <p>Three parallel arrays — the <code>m</code>-th entry of each defines the <code>m</code>-th scenario:</p>
+  <pre><code>L_values    = [...]   # drone path-length constraints
+sMax_values = [...]   # maximum cluster head speeds
+nCH_values  = [...]   # number of cluster heads</code></pre>
+
+  <h4>Cluster Head Placement</h4>
+  <p>
+    Initial positions are generated using a <strong>Halton low-discrepancy sequence</strong>
+    mapped to a disk of radius <code>dInit</code>. This gives more uniform coverage than
+    pure random sampling and is reproducible given <code>seed</code>.
+  </p>
+
+  <h4>Winner Selection</h4>
+  <p>
+    The winning method(s) are those achieving the minimum <code>f</code> per test case.
+    Ties between a forward method and its reverse counterpart are resolved in favour of
+    the forward method. <strong>Combined methods</strong> take the element-wise minimum
+    <code>f</code> across each forward/reverse pair.
+  </p>
+
+  <h4>Output Files (saved to <code>results/</code>)</h4>
+  <p>All filenames include the scenario tag <code>L{L}_sMax{sMax}_nCH{nCH}</code>.</p>
+  <table>
+    <tr><th>File</th><th>Content</th></tr>
+    <tr><td><code>scenario_params.json</code></td><td>All scenario and global parameters</td></tr>
+    <tr><td><code>results_{tag}.pkl</code></td><td>Full results dict (pickle)</td></tr>
+    <tr><td><code>results_{tag}.npz</code></td><td>Key numeric arrays</td></tr>
+    <tr><td><code>paths_{tag}.png</code></td><td>Path plot for last test case</td></tr>
+    <tr><td><code>fig1a_{tag}.png</code></td><td>Histogram of best <code>f</code> values</td></tr>
+    <tr><td><code>fig1b_{tag}.png</code></td><td>Win frequency (individual methods)</td></tr>
+    <tr><td><code>fig1c_{tag}.png</code></td><td>Mean &plusmn; std of <code>f &minus; best f</code></td></tr>
+    <tr><td><code>fig1c_pct_{tag}.png</code></td><td>Mean &plusmn; std of % improvement over initial ordering</td></tr>
+    <tr><td><code>fig2a_{tag}.png</code></td><td>Win frequency (combined methods)</td></tr>
+    <tr><td><code>fig2b_{tag}.png</code></td><td>Mean &plusmn; std of <code>f &minus; best f</code> (combined)</td></tr>
+    <tr><td><code>fig2b_pct_{tag}.png</code></td><td>Mean &plusmn; std of % improvement (combined)</td></tr>
+    <tr><td><code>fig3_{tag}.png</code></td><td>Reorder count distribution</td></tr>
+    <tr><td><code>fig4_{tag}.png</code></td><td>Execution time per method</td></tr>
+  </table>
+
+  <!-- Dependencies -->
+  <h2 id="dependencies">Module Dependency Graph</h2>
+  <div class="dep-tree">
+monte_carlo.py<br>
+├── comparison.py<br>
+│&nbsp;&nbsp; ├── routing.py<br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── geometry.py<br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; ├── optimization.py<br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── geometry.py<br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; └── metrics.py<br>
+│&nbsp;&nbsp; │&nbsp;&nbsp; └── metrics.py<br>
+│&nbsp;&nbsp; ├── geometry.py<br>
+│&nbsp;&nbsp; └── metrics.py<br>
+└── visualization.py<br>
+<br>
+main.py<br>
+├── comparison.py<br>
+└── visualization.py
+  </div>
+
+  <!-- Running -->
+  <h2 id="running">Running the Code</h2>
+
+  <h4>Full Monte Carlo run</h4>
+  <pre><code>python monte_carlo.py</code></pre>
+
+  <h4>Single test case</h4>
+  <pre><code>python main.py</code></pre>
+
+  <h4>With line profiling</h4>
+  <pre><code>kernprof -l -v monte_carlo.py</code></pre>
+  <p>
+    Add <code>@profile</code> decorators to target functions before running.
+    Remove them before normal use to avoid <code>NameError</code>.
+  </p>
+
+  <!-- Assumptions -->
+  <h2 id="assumptions">Key Assumptions</h2>
+  <ul>
+    <li>Drone departs from and returns to <code>(0, 0)</code>.</li>
+    <li>All cluster heads move at <strong>constant velocity</strong> throughout the drone tour.</li>
+    <li>The path has exactly <code>J</code> interior points — one per cluster head.
+        The visiting order of interior points matches the cluster head visit order.</li>
+    <li><code>project_to_length</code> is only correct when both endpoints are the same point — both <code>(0,0)</code>.</li>
+    <li><code>s_d = 1.0</code> is a choice of units. Only the ratio <code>sMax / s_d</code> affects problem difficulty.</li>
+  </ul>
+
+</main>
+</div>
+</body>
+</html>
